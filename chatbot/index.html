@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="format-detection" content="telephone=no">
+    <title>Database RAG Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SheetJS with Styling Support -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-content">
+                    <button class="btn btn-primary sidebar-new-chat" id="newChatBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        <span>New Chat</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-content" id="sidebarContent">
+                <div class="sidebar-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <p>No conversations yet</p>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-delete-all" id="deleteAllChatsBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
+                    </svg>
+                    <span>Delete All Chats</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <!-- Main Chat Area -->
+        <main class="app-main" id="appMain">
+            <header class="chat-header">
+                <div class="chat-header-left">
+                    <!-- SINGLE HAMBURGER MENU FOR ALL SCREENS -->
+                    <button class="btn btn-icon chat-header-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12h18M3 6h18M3 18h18" />
+                        </svg>
+                    </button>
+                    <h1 class="chat-header-title">Database RAG Assistant</h1>
+                </div>
+
+                <div class="chat-header-right">
+                    <!-- Logs Button -->
+                    <button class="btn btn-icon" id="logsToggleBtn" aria-label="View logs" title="View API logs">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                    </button>
+                    <button class="btn btn-icon" id="globalMenuBtn" aria-label="More options" title="More options">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="12" cy="5" r="1" />
+                            <circle cx="12" cy="19" r="1" />
+                        </svg>
+                    </button>
+                    <!-- Keep these hidden as they might be referenced in JS -->
+                    <button id="themeToggle" style="display: none;"></button>
+                    <button id="settingsBtn" style="display: none;"></button>
+                    <button id="deleteCurrentChatBtn" style="display: none;"></button>
+                    <button id="deleteAllChatsBtn" style="display: none;"></button>
+                </div>
+            </header>
+
+            <div class="chat-feed" id="chatFeed">
+                <button class="chat-scroll-btn" id="scrollToBottom" aria-label="Scroll to bottom">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M19 12l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div class="welcome-screen">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </div>
+                    <h2 class="welcome-title">Database RAG Assistant</h2>
+                    <p class="welcome-subtitle">Ask questions about your data (n8n Connected)</p>
+                </div>
+            </div>
+
+            <div class="chat-input-bar">
+                <div class="chat-input-wrapper">
+                    <input type="text" class="chat-input" id="messageInput" placeholder="Type a message..."
+                        autocomplete="off" />
+                    <button class="btn btn-primary" id="sendButton">
+                        <span>Send</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                        </svg>
+                    </button>
+                    <!-- Stop Button (Hidden by default) -->
+                    <button class="btn btn-stop" id="stopButton" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="6" y="6" width="12" height="12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Confirm Action</h2>
+            </div>
+            <div class="modal-body">
+                <p id="modalBody">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModalOverlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Configuration</h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; font-size: 0.9em; opacity: 0.8;">
+                    Configure your connection to the n8n RAG workflow. These settings are saved in your browser.
+                </p>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">n8n Webhook URL</label>
+                    <input type="text" id="configWebhookUrl" placeholder="https://your-n8n-instance.com/webhook/..."
+                        style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary);">
+                    <p style="font-size: 0.8em; margin-top: 4px; opacity: 0.7;">The content uses POST method with
+                        'chatInput', 'sessionId', and 'conversationId'.</p>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-light); margin: 20px 0; padding-top: 20px;">
+                    <h3 style="font-size: 1em; font-weight: 600; margin-bottom: 12px;">Authentication (Optional)</h3>
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">Username</label>
+                        <input type="text" id="configUsername"
+                            style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary);">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">Password</label>
+                        <input type="password" id="configPassword"
+                            style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary);">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="settingsCancel">Cancel</button>
+                <button class="btn btn-primary" id="settingsSave">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Logs Panel (Slide-out) -->
+    <div class="logs-panel" id="logsPanel">
+        <div class="logs-panel-header">
+            <h3>API Logs</h3>
+            <div class="logs-panel-actions">
+                <button class="btn btn-sm" onclick="exportLogs()" title="Export logs as JSON">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Export
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="clearLogs()" title="Clear all logs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    Clear
+                </button>
+                <button class="btn btn-sm btn-icon" onclick="toggleLogsPanel()" title="Close logs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="logs-panel-content" id="logsContent">
+            <div class="logs-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                <p>No logs yet. Start a conversation to see API logs.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
